@@ -1,0 +1,3 @@
+. (Join-Path $PSScriptRoot '..\Bootstrap.ps1') $PSScriptRoot
+
+Set-Alias -Name k kubectl;

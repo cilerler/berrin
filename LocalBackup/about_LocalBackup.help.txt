@@ -1,0 +1,110 @@
+TOPIC
+    about_LocalBackup
+
+SHORT DESCRIPTION
+    A PowerShell module for creating timestamped ZIP archives of local files 
+    and folders based on configurable path lists.
+
+LONG DESCRIPTION
+    The LocalBackup module provides the Backup-Local function for creating 
+    compressed archives of local files and folders. It reads paths from a 
+    configurable text file, supports environment variable expansion, and 
+    creates timestamped ZIP archives with hostname prefixes.
+
+    Key features:
+    - Configuration-based path management
+    - Environment variable expansion in paths
+    - Temporary staging directory with optional cleanup
+    - Timestamped archive files with hostname identification
+    - Support for both files and directories
+    - Error handling and validation
+
+COMMANDS
+    Backup-Local
+        Creates a timestamped ZIP archive of specified files and folders.
+
+CONFIGURATION FILE FORMAT
+    The configuration file uses a simple text format:
+    - One path per line
+    - Comments start with # and are ignored
+    - Empty lines are ignored
+    - Environment variables are expanded (e.g., $env:userprofile)
+    - Paths can be absolute or relative
+
+    Example configuration file (_backup_paths.txt):
+        # PowerShell profile
+        $env:userprofile\Documents\PowerShell\Microsoft.PowerShell_profile.ps1
+
+        # Terminal settings
+        $env:userprofile\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
+
+        # Oh-my-posh settings
+        $env:userprofile\Source\local\docs\oh-my-posh-theme.omp.json
+
+        # Git config
+        $env:userprofile\.gitconfig
+
+        # NuGet config
+        $env:userprofile\AppData\Roaming\NuGet\NuGet.Config
+
+        # NPM global packages
+        # $env:userprofile\AppData\Roaming\npm
+
+        # VS Code settings
+        $env:userprofile\AppData\Roaming\Code\User\settings.json
+
+        # Kubernetes config
+        $env:userprofile\.kube\config
+
+
+ARCHIVE NAMING
+    Archives are named using the pattern: {hostname}_{yyyyMMddHHmmss}.zip
+    
+    Example: MYCOMPUTER_20250510143500.zip
+
+DEFAULT LOCATIONS
+    BackupRoot:     $env:userprofile\Source\local\archives
+    ConfigFile:     {BackupRoot}\_backup_paths.txt
+    TempFolder:     {BackupRoot}\_temp
+    Archives:       {BackupRoot}\*.zip
+
+EXAMPLES
+    # Create backup with default settings
+    Backup-Local
+    
+    # Use custom config file name
+    Backup-Local -ConfigFileName "important-files.txt"
+    
+    # Keep temporary files for inspection
+    Backup-Local -KeepTemp
+    
+    # Custom backup root with custom folder names
+    Backup-Local -BackupRoot "D:\MyBackups" -TempFolderName "staging"
+
+REQUIREMENTS
+    - PowerShell 5.1 or higher
+    - Windows platform (for path handling)
+    - Write permissions to backup directories
+
+TROUBLESHOOTING
+    If backup fails, check:
+    1. Configuration file exists and has valid paths
+    2. Source files/folders exist and are accessible
+    3. Sufficient disk space for staging and archive
+    4. Write permissions to backup directories
+
+    Use -KeepTemp parameter to inspect temporary staging directory.
+
+RELATED TOPICS
+    - Get-Help Backup-Local
+    - about_Compress-Archive
+    - about_Environment_Variables
+    - about_Redirection
+
+KEYWORDS
+    Backup, Archive, Zip, Configuration, Files, Folders, Staging, Timestamp
+
+SEE ALSO
+    Compress-Archive
+    Copy-Item
+    Get-Content
