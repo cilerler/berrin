@@ -16,10 +16,6 @@ function Initialize-OhMyPosh {
 
     # Define the lines to append
     $linesToAdd = @"
-function prompt
-{
-    return;
-}
 Import-Module -Name Terminal-Icons;
 oh-my-posh --init --shell pwsh --config "$ohMyPoshFilePath" | Invoke-Expression;
 "@
