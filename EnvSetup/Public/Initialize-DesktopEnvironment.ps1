@@ -17,17 +17,17 @@ function Initialize-DesktopEnvironment {
     Write-Verbose "Starting desktop environment initialization..."
 
     try {
-        Write-Verbose "Hiding search box from taskbar..."
-        Hide-SearchBoxFromTaskbar
-
-        Write-Verbose "Removing public desktop shortcuts..."
-        Remove-AllPublicDesktopShortcuts
-
         Write-Verbose "Setting desktop wallpaper to: $DesktopWallpaperImagePath"
         Set-DesktopWallpaper -ImagePath $DesktopWallpaperImagePath
 
         Write-Verbose "Setting lock screen background to: $LockScreenImagePath"
         Set-LockScreenBackground -ImagePath $LockScreenImagePath
+
+        Write-Verbose "Hiding search box from taskbar..."
+        Hide-SearchBoxFromTaskbar
+
+        Write-Verbose "Removing public desktop shortcuts..."
+        Remove-AllPublicDesktopShortcuts
 
         Write-Verbose "Creating standard folder structure..."
         Add-Folders
@@ -35,28 +35,15 @@ function Initialize-DesktopEnvironment {
         Write-Verbose "Adding quick access pins..."
         Add-QuickPins
 
-        Write-Verbose "Installling WinGet"
-        Install-App `
-            -BasePath $BasePath `
-            -AppName "winget" `
-            -GitHubRepo "microsoft/winget-cli" `
-            -AssetFilter "*.msixbundle" `
-            -DependenciesFilter "*Dependencies.zip"
+        # Requires elevated permissions
+        # Write-Verbose "Enabling Windows features..."
+        # Enable-Features
 
-        Write-Verbose "Installling PowerShell Core"
-        Install-App `
-            -BasePath $BasePath `
-            -AppName "powershell" `
-            -GitHubRepo "powershell/powershell" `
-            -AssetFilter "*-win-x64.msi" `
-            -UseWingetFallback `
-            -WingetId "Microsoft.PowerShell"
+        Write-Verbose "Installing WinGet"
+        Install-WinGet -BasePath $BasePath
 
-        # Allow time for PATH update
-        Start-Sleep -Seconds 2;
-        # Refresh the PATH variable to include the new PowerShell installation
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
+        Write-Verbose "Installing PowerShell Core"
+        Install-PowerShellCore -BasePath $BasePath
 
         Write-Verbose "Calling PowerShell Core script to initialize desktop environment..."
         pwsh.exe -ExecutionPolicy Bypass -Command "Import-Module '$env:userprofile\Source\github\cilerler\berrin\AllModules'; Initialize-DesktopEnvironmentPowerShellCore -BasePath '$BasePath' -TerminalBackgroundImagePath '$TerminalBackgroundImagePath'"
