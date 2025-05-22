@@ -90,26 +90,34 @@ function Invoke-GitRepositoryMaintenance {
         return
     }
     $activeBranch = $(git rev-parse --abbrev-ref HEAD)
-    $updatedBranch = [string]::IsNullOrWhiteSpace($branch) ? $activeBranch : $branch
+    if ([string]::IsNullOrWhiteSpace($branch)) {
+        $updatedBranch = $activeBranch
+    } else {
+        $updatedBranch = $branch
+    }
     if ($prune) {
         if ($pull) {
             git pull --all --prune
-        } else {
+        }
+        else {
             git fetch --all --prune
         }
         git branch -v | Select-String -Pattern '^  (?<branchName>\S+)\s+\w+ \[gone\]' | ForEach-Object {
             if ($delete -eq $true) {
                 git branch -D $_.Matches[0].Groups['branchName']
-            } else {
+            }
+            else {
                 Write-Output $_
             }
         }
-    } else {
+    }
+    else {
         if ($pull) {
             if ($all.IsPresent) {
                 if (git status --porcelain) {
                     Write-Output "There are uncommitted changes in the repository. Aborting script."
-                } else {
+                }
+                else {
                     $branches = git branch | ForEach-Object { $_.TrimStart('*').Trim() }
                     foreach ($branchToUpdate in $branches) {
                         Write-Output "Checking out branch [$branchToUpdate]"
@@ -118,10 +126,12 @@ function Invoke-GitRepositoryMaintenance {
                     }
                     git checkout $activeBranch
                 }
-            } else {
+            }
+            else {
                 git pull --all
             }
-        } else {
+        }
+        else {
             git fetch --all
         }
     }
@@ -133,47 +143,20 @@ function Invoke-GitRepositoryMaintenance {
             $err = ($errOutput[0] | out-string).Trim()
             if ($err.StartsWith("fatal: ambiguous argument") -or $err.StartsWith("error: Could not access 'refs/remotes/origin/$updatedBranch'")) {
                 Write-Output "'origin/$updatedBranch' branch does not exist in the repository."
-            } else {
+            }
+            else {
                 Write-Output "Unknown error occured while runing diff command: $err"
             }
-        } elseif ($output) {
+        }
+        elseif ($output) {
             $list = $output.Split([System.Environment]::NewLine, [System.StringSplitOptions]::RemoveEmptyEntries)
             Write-Output "$($list.length) files are different between 'origin/$updatedBranch' and '$remoteHead'"
-        } else {
+        }
+        else {
             Write-Output "There are no files that are different between 'origin/$updatedBranch' and '$remoteHead'"
         }
-    } else {
+    }
+    else {
         git branch -a
     }
-}
-
-function Invoke-GitRepositoriesMaintenance() {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory=$false)]
-        [string]$branch,
-        [Parameter(Mandatory=$false)]
-        [switch]$pull,
-        [Parameter(Mandatory=$false)]
-        [switch]$prune,
-        [Parameter(Mandatory=$false)]
-        [switch]$compare,
-        [Parameter(Mandatory=$false)]
-        [switch]$delete,
-        [Parameter(Mandatory=$false)]
-        [switch]$all
-    )
-    Push-Location
-    if (Test-Path -Path ".git" -PathType Container) {
-        Write-Output "Skipping: $((Get-Location).Path) is a Git repository!"
-        return
-    } else {
-        (Get-ChildItem -Directory).FullName | ForEach-Object {
-            Write-Output "----- $([System.IO.Path]::GetFileName($_))"
-            Set-Location $_
-            Invoke-GitRepositoryMaintenance -branch $branch -pull:$pull -prune:$prune -compare:$compare -delete:$delete -all:$all
-            Set-Location ..
-        }
-    }
-    Pop-Location
 }
