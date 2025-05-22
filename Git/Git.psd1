@@ -4,5 +4,5 @@
     GUID = '00000000-0000-0000-0000-000000000001'
     Author = 'Cengiz Ilerler'
     Description = 'Git repository management functions'
-    FunctionsToExport = @('New-BareRepository', 'Backup-Repository', 'Backup-Content', 'Restore-Content', 'Set-GitUserConfigBulk', 'Reset-GitRepository', 'Invoke-GitRepositoryMaintenance', 'Invoke-GitRepositoriesMaintenance')
+    FunctionsToExport = @('Backup-Content', 'Invoke-GitRepositoriesMaintenance', 'Invoke-GitRepositoryMaintenance', 'New-BareRepository', 'Reset-GitRepository', 'Restore-Content', 'Set-GitUserConfig', 'Set-GitUserConfigBulk')
 }
