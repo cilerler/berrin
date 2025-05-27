@@ -22,9 +22,10 @@ function Add-Folders {
     # Personal notes structure
     $basePath = Join-Path $localPath 'docs\personal'
     New-Item -ItemType "Directory" -Path $basePath -Force;
-    New-Item -ItemType "File" -Path (Join-Path $basePath '.editorconfig') -Force;
-    New-Item -ItemType "File" -Path (Join-Path $basePath '.gitignore') -Force;
     New-Item -ItemType "File" -Path (Join-Path $basePath '.gitattribute') -Force;
+    "*.env" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.gitignore') -Force;
+    "root = true" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.editorconfig') -Force;
+    "*" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.copilotignore') -Force;
     New-Item -ItemType "Directory" -Path (Join-Path $basePath '.vscode') -Force;
     New-Item -ItemType "Directory" -Path (Join-Path $basePath '.workspaces') -Force;
 
