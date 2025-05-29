@@ -1,4 +1,3 @@
-
 <#
 .SYNOPSIS
     Creates timestamped ZIP archives of local files and folders based on configurable path lists.
@@ -61,116 +60,128 @@ function Backup-Local {
         [string]$TempFolderName = "_temp",
         [switch]$KeepTemp
     )
-    
+
     # Config file and temp folder are always in BackupRoot
     $configFile = Join-Path -Path $BackupRoot -ChildPath $ConfigFileName
     $backupFolder = Join-Path -Path $BackupRoot -ChildPath $TempFolderName
-    
+
     # Check if config file exists
     if (-not (Test-Path $configFile)) {
         Write-Host "Config file not found: $configFile" -ForegroundColor Red
         return
     }
-    
+
     # Read paths from config file
     try {
         $pathsToBackup = Get-Content -Path $configFile -ErrorAction Stop |
-            Where-Object { $_ -and $_ -notmatch '^\s*#' } |  # Remove comments and empty lines
-            ForEach-Object { $_.Trim() } |                   # Trim whitespace
-            Where-Object { $_ } |                           # Remove empty strings
-            ForEach-Object { 
-                # Expand environment variables
-                $ExecutionContext.InvokeCommand.ExpandString($_)
-            }
-    } catch {
+        Where-Object { $_ -and $_ -notmatch '^\s*#' } |  # Remove comments and empty lines
+        ForEach-Object { $_.Trim() } |                   # Trim whitespace
+        Where-Object { $_ } |                           # Remove empty strings
+        ForEach-Object {
+            # Expand environment variables
+            $ExecutionContext.InvokeCommand.ExpandString($_)
+        }
+    }
+    catch {
         Write-Host "Error reading config file: $_" -ForegroundColor Red
         return
     }
-    
+
     if ($pathsToBackup.Count -eq 0) {
         Write-Host "No valid paths found in config file" -ForegroundColor Yellow
         return
     }
-      # Cleanup temp folder if it exists
+
+    # Cleanup temp folder if it exists
     if (Test-Path $backupFolder) {
         Write-Host "Removing $backupFolder" -ForegroundColor Cyan
         Remove-Item $backupFolder -Recurse -Force -ErrorAction Stop
     }
-    
+
     # Ensure archive directory exists
     if (-not (Test-Path $BackupRoot)) {
         New-Item -Path $BackupRoot -ItemType Directory -Force | Out-Null
     }
-    
+
     Write-Host "==== BACKUP OPERATION START ==== $(Get-Date)" -ForegroundColor Magenta
     Write-Host "Processing $($pathsToBackup.Count) paths from config file..." -ForegroundColor Cyan
-    
+
     $successCount = 0
-    
+
     # Process all paths (files and folders) in a single pass
     foreach ($source in $pathsToBackup) {
         if (Test-Path $source) {
-            # Get the relative path by removing the userprofile prefix
-            $relativePath = $source.Replace("$env:userprofile\", "")
-            $destination = Join-Path -Path "$backupFolder\$env:username" -ChildPath $relativePath
-            
-            # Create destination directory
-            $destDir = Split-Path -Path $destination -Parent
-            if (-not (Test-Path $destDir)) {
-                New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            # Determine if source is a file or directory
+            $isDirectory = (Get-Item $source) -is [System.IO.DirectoryInfo]
+            # Only FILES go into the temp folder for the main ZIP
+            # Directories are handled by Backup-Content
+            if ($isDirectory) {
+                Write-Host "Backing up directory: $source" -ForegroundColor Cyan
+                try {
+                    Backup-Content -SourcePath $source -RootFolder $BackupRoot
+                    $successCount++
+                }
+                catch {
+                    Write-Warning "Failed to backup directory $source : $_"
+                }
             }
-            
-            try {
-                # Determine if source is a file or directory
-                $isDirectory = (Get-Item $source) -is [System.IO.DirectoryInfo]
-                  # Copy with appropriate options based on item type
-                if ($isDirectory) {
-                    Write-Host "Backing up directory: $source" -ForegroundColor Cyan
-                    #Copy-Item -Path $source -Destination $destination -Recurse -ErrorAction Stop
-                    Backup-Content -SourcePath $source -TargetRoot $BackupRoot
-                } else {
+            else {
+                # Files go into the temp folder
+                $relativePath = $source.Replace("$env:userprofile\", "")
+                $destination = Join-Path -Path "$backupFolder\$env:username" -ChildPath $relativePath
+
+                # Create destination directory
+                $destDir = Split-Path -Path $destination -Parent
+                if (-not (Test-Path $destDir)) {
+                    New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+                }
+
+                try {
                     Write-Host "Backing up file: $source" -ForegroundColor Cyan
                     Copy-Item -Path $source -Destination $destination -ErrorAction Stop
+                    $successCount++
                 }
-                $successCount++
-            } catch {
-                Write-Warning "Failed to copy $source : $_"
+                catch {
+                    Write-Warning "Failed to copy $source : $_"
+                }
             }
-        } else {
+        }
+        else {
             Write-Warning "Source item not found: $source"
         }
     }
-    
+
     # Check if any files were successfully copied
     if ($successCount -eq 0) {
         Write-Host "No files were successfully copied. Aborting archive creation." -ForegroundColor Yellow
         return
     }
-    
+
     # Verify temp folder has content before archiving
     if (-not (Test-Path "$backupFolder\*")) {
         Write-Host "No content in temp folder. Aborting archive creation." -ForegroundColor Yellow
         return
     }
-      # Create zip file
+    # Create zip file
     $zipFileName = "$(hostname)_$([DateTime]::UtcNow.ToString('yyyyMMddHHmmss')).zip"
     $zipFilePath = "$BackupRoot\$zipFileName"
-    
+
     try {
         Write-Host "Creating archive $zipFileName" -ForegroundColor Cyan
         Compress-Archive -Path "$backupFolder\*" -DestinationPath $zipFilePath -ErrorAction Stop
-        
+
         if (Test-Path $zipFilePath) {
             Write-Host "==== BACKUP OPERATION COMPLETE ==== $(Get-Date)" -ForegroundColor Magenta
             Write-Host "Archive created successfully at $zipFilePath" -ForegroundColor Green
             Write-Host "Successfully backed up $successCount items" -ForegroundColor Green
-            
+
             if (-not $KeepTemp -and (Test-Path $backupFolder)) {
                 Write-Host "Cleaning up temporary files" -ForegroundColor Cyan
                 Remove-Item $backupFolder -Recurse -Force
             }
         }
-    } catch {
+    }
+    catch {
         Write-Host "Failed to create archive: $_" -ForegroundColor Red
     }
 }
