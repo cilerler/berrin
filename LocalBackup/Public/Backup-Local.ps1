@@ -157,31 +157,25 @@ function Backup-Local {
         return
     }
 
-    # Verify temp folder has content before archiving
-    if (-not (Test-Path "$backupFolder\*")) {
-        Write-Host "No content in temp folder. Aborting archive creation." -ForegroundColor Yellow
-        return
-    }
-    # Create zip file
-    $zipFileName = "$(hostname)_$([DateTime]::UtcNow.ToString('yyyyMMddHHmmss')).zip"
-    $zipFilePath = "$BackupRoot\$zipFileName"
-
-    try {
-        Write-Host "Creating archive $zipFileName" -ForegroundColor Cyan
-        Compress-Archive -Path "$backupFolder\*" -DestinationPath $zipFilePath -ErrorAction Stop
-
-        if (Test-Path $zipFilePath) {
-            Write-Host "==== BACKUP OPERATION COMPLETE ==== $(Get-Date)" -ForegroundColor Magenta
-            Write-Host "Archive created successfully at $zipFilePath" -ForegroundColor Green
-            Write-Host "Successfully backed up $successCount items" -ForegroundColor Green
-
-            if (-not $KeepTemp -and (Test-Path $backupFolder)) {
-                Write-Host "Cleaning up temporary files" -ForegroundColor Cyan
-                Remove-Item $backupFolder -Recurse -Force
-            }
+    # Only create the main ZIP if there's content in the temp folder
+    if ((Test-Path $backupFolder) -and (Test-Path "$backupFolder\*")) {
+        try {
+            Write-Host "Creating archive for collected files" -ForegroundColor Cyan
+            Backup-Content -SourcePath $backupFolder -RootFolder $BackupRoot
+        } catch {
+            Write-Host "Failed to create archive: $_" -ForegroundColor Red
         }
+    } else {
+        Write-Host "No files to archive in main ZIP" -ForegroundColor Yellow
     }
-    catch {
-        Write-Host "Failed to create archive: $_" -ForegroundColor Red
+
+    # Summary
+    Write-Host "==== BACKUP OPERATION COMPLETE ==== $(Get-Date)" -ForegroundColor Magenta
+    Write-Host "Successfully backed up $successCount items" -ForegroundColor Green
+
+    # Cleanup
+    if (-not $KeepTemp -and (Test-Path $backupFolder)) {
+        Write-Host "Cleaning up temporary files" -ForegroundColor Cyan
+        Remove-Item $backupFolder -Recurse -Force
     }
 }
