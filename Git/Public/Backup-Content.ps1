@@ -197,6 +197,8 @@ function Backup-Content {
 
     # Generate timestamp for filename
     $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+    # Get computer name for prefix
+    $computerNamePrefix = $(hostname)
     # Create filename from path (excluding drive letter and colon)
     $pathWithoutDrive = $SourcePath -replace '^[A-Za-z]:', ''
     $pathWithoutDrive = $pathWithoutDrive.TrimStart('\').TrimEnd('\')
@@ -231,7 +233,7 @@ function Backup-Content {
 
     if ($isGitRepo) {
         # Git repository backup logic
-        $backupFileName = "$sanitizedPath.$timestamp.bundle"
+        $backupFileName = "$computerNamePrefix`_$sanitizedPath.$timestamp.bundle"
         $backupFilePath = Join-Path -Path $RootFolder -ChildPath $backupFileName
 
         Write-Host "Creating Git bundle from $SourcePath to $backupFilePath"
@@ -256,7 +258,7 @@ function Backup-Content {
         }
     } else {
         # Regular directory backup logic - create ZIP archive
-        $backupFileName = "$sanitizedPath.$timestamp.zip"
+        $backupFileName = "$computerNamePrefix`_$sanitizedPath.$timestamp.zip"
         $backupFilePath = Join-Path -Path $RootFolder -ChildPath $backupFileName
 
         Write-Host "Creating ZIP archive from $SourcePath to $backupFilePath"
