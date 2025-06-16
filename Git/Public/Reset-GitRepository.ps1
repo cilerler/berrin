@@ -5,16 +5,16 @@
 .DESCRIPTION
     Reset-GitRepository removes the existing .git folder, reinitializes the repository, restores the previous remote URL,
     and reapplies the user.name and user.email settings. All files are staged and committed as an initial commit, then
-    force-pushed to the remote origin. This is useful for cleaning up repository history or reinitializing a project
-    while keeping the remote and user configuration intact.
+    force-pushed to the remote origin. Automatically detects the current branch name instead of hardcoding 'main'.
 
 .EXAMPLE
     Reset-GitRepository
-    Resets the current directory's Git repository, preserving remote and user config, and force-pushes to origin/main.
+    Resets the current directory's Git repository, preserving remote and user config, and force-pushes to the detected branch.
 
 .NOTES
     Requires Git to be installed and available in the system PATH.
     The function will abort if no .git folder or remote URL is found.
+    Automatically detects current branch (master, main, etc.) instead of hardcoding.
 #>
 function Reset-GitRepository {
     [CmdletBinding()]
@@ -26,10 +26,11 @@ function Reset-GitRepository {
         return
     }
 
-    # Extract the remote URL, username and email from git config
+    # Extract the remote URL, username, email, and current branch from git config
     $remoteUrl = git config --get remote.origin.url
     $userName = git config --get user.name
     $userEmail = git config --get user.email
+    $currentBranch = git branch --show-current
 
     if ([string]::IsNullOrEmpty($remoteUrl)) {
         Write-Error "Could not find remote URL in git config. Exiting."
@@ -44,12 +45,18 @@ function Reset-GitRepository {
     if (-not [string]::IsNullOrEmpty($userEmail)) {
         Write-Output "Found user email: $userEmail"
     }
+    if (-not [string]::IsNullOrEmpty($currentBranch)) {
+        Write-Output "Found current branch: $currentBranch"
+    } else {
+        Write-Error "Could not detect current branch. Exiting."
+        return
+    }
 
     # Remove .git folder
     Remove-Item -Recurse -Force .git
 
     # Initialize new git repository
-    git init
+    git init -b $currentBranch
 
     # Set user name and email if found
     Set-GitUserConfig -RepoPath "." -GitUserName $userName -GitUserEmail $userEmail
@@ -63,8 +70,8 @@ function Reset-GitRepository {
     # Add remote
     git remote add origin $remoteUrl
 
-    # Force push
-    git push -u --force origin main
+    # Force push to detected/default branch
+    git push --set-upstream --force origin $currentBranch
 
-    Write-Output "Repository reset and pushed to $remoteUrl"
+    Write-Output "Repository reset and pushed to $remoteUrl on branch '$currentBranch'"
 }
