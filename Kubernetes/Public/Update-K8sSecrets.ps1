@@ -2,11 +2,11 @@ function Update-K8sSecrets() {
 	[CmdletBinding()]
 	param(
 		[Parameter(Mandatory = $true)]
-		[string]$namespace, 
+		[string]$namespace,
 		[Parameter(Mandatory = $true)]
 		[string]$deploymentName,
 		[Parameter(Mandatory = $true)]
-		[string]$configMapName,
+		[string]$secretName,
 		[Parameter(Mandatory = $false)]
 		[switch]$restart
 	)
