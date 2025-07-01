@@ -20,9 +20,9 @@ function Add-Folders {
     New-Item -ItemType "Directory" -Path (Join-Path $localPath 'sandbox') -Force;
 
     # Personal notes structure
-    $basePath = Join-Path $localPath 'docs\personal'
+    $basePath = Join-Path $localPath 'docs\personal';
     New-Item -ItemType "Directory" -Path $basePath -Force;
-    New-Item -ItemType "File" -Path (Join-Path $basePath '.gitattribute') -Force;
+    New-Item -ItemType "File" -Path (Join-Path $basePath '.gitattributes') -Force;
     "*.env" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.gitignore') -Force;
     "root = true" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.editorconfig') -Force;
     "*" | Set-Content -Encoding UTF8 -Path (Join-Path $basePath '.copilotignore') -Force;
