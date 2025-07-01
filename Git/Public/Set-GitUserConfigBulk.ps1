@@ -51,30 +51,30 @@ function Set-GitUserConfigBulk {
     param(
         [Parameter(Mandatory=$true)]
         [string]$FolderPath,
-        
+
         [Parameter(Mandatory=$false)]
         [string[]]$ExcludeFolders = @(),
-        
+
         [Parameter(Mandatory=$false)]
         [string]$GitUserName,
-        
+
         [Parameter(Mandatory=$false)]
         [string]$GitUserEmail,
-        
+
         [Parameter(Mandatory=$false)]
         [switch]$DryRun
     )
-    
+
     $ErrorActionPreference = 'Stop'
       # Validate parameters
     if (-not (Test-Path -Path $FolderPath -PathType Container)) {
         throw "The specified folder path '$FolderPath' does not exist or is not a directory."
     }
-    
+
     if (-not ($GitUserName -or $GitUserEmail)) {
         throw "At least one of GitUserName or GitUserEmail must be specified."
     }
-    
+
     # Get all directories in the specified folder (non-recursive)
     $allFolders = Get-ChildItem -Path $FolderPath -Directory
       # Initialize counters for logging
@@ -83,14 +83,14 @@ function Set-GitUserConfigBulk {
     $repositoryCount = 0
     $repoList = @()
     $nonGitFolderList = @()
-    
+
     if ($DryRun) {
         Write-Host "DRY RUN MODE: No changes will be made" -ForegroundColor Yellow
     }
-    
+
     Write-Host "==== OPERATION START ==== $(Get-Date)" -ForegroundColor Magenta
     Write-Host "Searching for Git repositories in $FolderPath..." -ForegroundColor Cyan
-    
+
     # Process each folder
     foreach ($folder in $allFolders) {
         $folderName = $folder.Name
@@ -105,10 +105,10 @@ function Set-GitUserConfigBulk {
             $excludedCount++
             continue
         }
-        
+
         # Check if the folder contains a .git directory
         $gitDirPath = Join-Path -Path $folderPath -ChildPath ".git"
-        
+
         if (Test-Path -Path $gitDirPath -PathType Container) {
             if ($DryRun) {
                 Write-Host "Would configure Git repository in: $folderName" -ForegroundColor Cyan
@@ -121,20 +121,20 @@ function Set-GitUserConfigBulk {
                 $repoList += $folderPath
             } else {
                 Write-Host "Found Git repository in: $folderName" -ForegroundColor Green
-                
+
                 # Apply Git user configuration
                 Set-GitUserConfig -RepoPath $folderPath -GitUserName $GitUserName -GitUserEmail $GitUserEmail
             }
-              $repositoryCount++        
+              $repositoryCount++
             } else {
             if ($DryRun) {
-                Write-Host "Folder '$folderName' is not a Git repository. Would skip." -ForegroundColor Orange
+                Write-Host "Folder '$folderName' is not a Git repository. Would skip." -ForegroundColor Blue
                 $nonGitFolderList += $folderPath
             } else {
-                Write-Host "Folder '$folderName' is not a Git repository. Skipping." -ForegroundColor Orange
+                Write-Host "Folder '$folderName' is not a Git repository. Skipping." -ForegroundColor Blue
             }
         }
-        
+
         $processedCount++
     }
       # Summary
