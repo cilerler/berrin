@@ -5,7 +5,7 @@ function Enable-Features {
     $features = @(
         "TelnetClient",
         "VirtualMachinePlatform",
-        "Microsoft-Hyper-V-All",
+        "Containers-DisposableClientVM",
         "Microsoft-Windows-Subsystem-Linux"
     )
 
