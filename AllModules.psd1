@@ -26,13 +26,14 @@
     # TypesToProcess = @()                                              # Type files to process
     # FormatsToProcess = @()                                            # Format files to process        # Nested modules and exports
     NestedModules = @(                                                  # Modules to import
-          'EnvFx\EnvFx.psd1'
-        , 'Git\Git.psd1'
-        , 'LocalBackup\LocalBackup.psd1'
-        , 'Kubernetes\Kubernetes.psd1'
-        , 'RabbitMQ\RabbitMQ.psd1'
+        , 'EnvFx\EnvFx.psd1'
         , 'CloudFlare\CloudFlare.psd1'
+        , 'EnvFx\EnvFx.psd1'
         , 'EnvSetup\EnvSetup.psd1'
+        , 'Git\Git.psd1'
+        , 'Kubernetes\Kubernetes.psd1'
+        , 'LocalBackup\LocalBackup.psd1'
+        , 'RabbitMQ\RabbitMQ.psd1'
     )
     # FunctionsToExport = @(                                              # Functions to export
     #       'Get-HostFile'
